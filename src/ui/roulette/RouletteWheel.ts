@@ -47,15 +47,29 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
       this.segmentsContainer.add(slotView);
     }
 
-    // ── 중앙 원 (다크, 골드 테두리) ─────────────────────────────
+    // ── 방사형 구분선 (슬롯 경계마다 흰색 선) ────────────────────
+    const divG = scene.add.graphics();
+    divG.lineStyle(1, 0xffffff, 0.2);
+    for (let i = 0; i < 12; i++) {
+      const a = Phaser.Math.DegToRad(i * 30);
+      divG.lineBetween(
+        Math.cos(a) * INNER_RADIUS,
+        Math.sin(a) * INNER_RADIUS,
+        Math.cos(a) * OUTER_RADIUS,
+        Math.sin(a) * OUTER_RADIUS,
+      );
+    }
+    this.segmentsContainer.add(divG);
+
+    // ── 중앙 원 (다크, 골드 테두리 강화) ─────────────────────────
     const center = scene.add.graphics();
     center.fillStyle(THEME.BG_DARK, 1);
     center.fillCircle(0, 0, INNER_RADIUS - 2);
-    // 이중 골드 링 (중앙)
-    center.lineStyle(2, THEME.GOLD, 1);
-    center.strokeCircle(0, 0, INNER_RADIUS - 2);
-    center.lineStyle(1, THEME.GOLD_DARK, 0.7);
-    center.strokeCircle(0, 0, INNER_RADIUS - 5);
+    // 이중 골드 링 (강화)
+    center.lineStyle(2.5, THEME.GOLD, 1);
+    center.strokeCircle(0, 0, INNER_RADIUS - 1);
+    center.lineStyle(1, THEME.GOLD, 0.45);
+    center.strokeCircle(0, 0, INNER_RADIUS + 6);
     this.segmentsContainer.add(center);
 
     // 중앙 텍스트 (♠ 심볼 + SPIN)
