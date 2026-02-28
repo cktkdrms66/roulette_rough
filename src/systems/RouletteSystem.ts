@@ -9,8 +9,8 @@ export interface SpinResult {
 
 export class RouletteSystem {
   private readonly EXTRA_REVOLUTIONS = 5;
-  private readonly SLOT_COUNT = 12;
-  private readonly DEG_PER_SLOT = 360 / this.SLOT_COUNT; // 30도
+  private readonly SLOT_COUNT = 6;
+  private readonly DEG_PER_SLOT = 360 / this.SLOT_COUNT; // 60도
 
   randomLandingIndex(): number {
     return Math.floor(Math.random() * this.SLOT_COUNT);

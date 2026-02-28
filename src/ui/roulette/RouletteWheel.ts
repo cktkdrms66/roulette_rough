@@ -50,8 +50,8 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
     // ── 방사형 구분선 (슬롯 경계마다 흰색 선) ────────────────────
     const divG = scene.add.graphics();
     divG.lineStyle(1, 0xffffff, 0.2);
-    for (let i = 0; i < 12; i++) {
-      const a = Phaser.Math.DegToRad(i * 30);
+    for (let i = 0; i < 6; i++) {
+      const a = Phaser.Math.DegToRad(i * 60);
       divG.lineBetween(
         Math.cos(a) * INNER_RADIUS,
         Math.sin(a) * INNER_RADIUS,
@@ -158,25 +158,26 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
     let angle = Phaser.Math.RadToDeg(Math.atan2(point.y, point.x));
     angle = ((angle % 360) + 360) % 360;
 
-    return Math.floor(angle / 30) % 12;
+    return Math.floor(angle / 60) % 6;
   }
 
   // 연속 n칸 그룹 반환
   getSlotGroup(hoveredIndex: number, count: number): number[] {
+    const N = 6;
     if (count === 1) return [hoveredIndex];
-    if (count === 2) return [hoveredIndex, (hoveredIndex + 1) % 12];
+    if (count === 2) return [hoveredIndex, (hoveredIndex + 1) % N];
     if (count === 3) {
       return [
-        (hoveredIndex - 1 + 12) % 12,
+        (hoveredIndex - 1 + N) % N,
         hoveredIndex,
-        (hoveredIndex + 1) % 12,
+        (hoveredIndex + 1) % N,
       ];
     }
     // 일반적인 경우: hoveredIndex 중심
     const result: number[] = [];
     const half = Math.floor(count / 2);
     for (let i = -half; i <= count - half - 1; i++) {
-      result.push((hoveredIndex + i + 12) % 12);
+      result.push((hoveredIndex + i + N) % N);
     }
     return result;
   }

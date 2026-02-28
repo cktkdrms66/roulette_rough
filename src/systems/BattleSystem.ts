@@ -201,8 +201,13 @@ export class BattleSystem {
     this.state.wave += 1;
 
     if (this.state.wave > this.state.maxWaves) {
+      const healAmount = this.state.playerMaxHP - this.state.playerHP;
+      this.state.playerHP = this.state.playerMaxHP;
       this.state.phase = 'BattleEnd';
       this.events.emit(GameEvents.PHASE_CHANGED, { phase: 'BattleEnd' });
+      if (healAmount > 0) {
+        this.events.emit(GameEvents.HEAL_APPLIED, { amount: healAmount });
+      }
       this.events.emit(GameEvents.BATTLE_ENDED, { victory: true });
     } else {
       this.state.phase = 'WaveEnd';
@@ -220,7 +225,8 @@ export class BattleSystem {
 
   // 웨이브 종료 보상
   private endWave(): void {
-    const goldReward = 3 + this.state.wave;
+    const goldBonus = Math.floor(this.state.playerGold / 5);
+    const goldReward = 3 + this.state.wave + goldBonus;
     this.state.freeRerolls += 1;
     this.state.playerGold += goldReward;
     // 성장형 조커 전투 내 누적치 리셋 (웨이브 간은 리셋하지 않음 - 전투 종료 시에만)

@@ -13,7 +13,7 @@ function getValueLabel(slot: Slot, skill: SkillDef): string {
     case 'FIRE_BOLT':
     case 'THUNDER_CLAP':
     case 'COLD_PUNCH':
-      return flat > 0 ? `ATK ${base}+${flat}` : `ATK ${base}`;
+      return `ATK ${base + flat}`;
 
     case 'RAPID_STRIKE': {
       const hits = skill.hitCount ?? 3;
@@ -78,7 +78,7 @@ export class RouletteSlot extends Phaser.GameObjects.Container {
     this.slot = slot;
     this.radius = innerRadius;
     this.outerRadius = outerRadius;
-    this.slotAngle = slot.index * 30; // 각 슬롯은 30도
+    this.slotAngle = slot.index * 60; // 각 슬롯은 60도
 
     this.bg = scene.add.graphics();
 
@@ -112,8 +112,8 @@ export class RouletteSlot extends Phaser.GameObjects.Container {
 
     this.bg.clear();
 
-    const startAngle = Phaser.Math.DegToRad(this.slotAngle - 15);
-    const endAngle = Phaser.Math.DegToRad(this.slotAngle + 15);
+    const startAngle = Phaser.Math.DegToRad(this.slotAngle - 30);
+    const endAngle = Phaser.Math.DegToRad(this.slotAngle + 30);
 
     // 메인 파이 슬라이스
     this.bg.fillStyle(color, 1);
@@ -171,8 +171,8 @@ export class RouletteSlot extends Phaser.GameObjects.Container {
 
     this.bg.clear();
 
-    const startAngle = Phaser.Math.DegToRad(this.slotAngle - 15);
-    const endAngle = Phaser.Math.DegToRad(this.slotAngle + 15);
+    const startAngle = Phaser.Math.DegToRad(this.slotAngle - 30);
+    const endAngle = Phaser.Math.DegToRad(this.slotAngle + 30);
     const baseColor = CATEGORY_COLORS[this.slot.category] ?? 0x555555;
 
     this.bg.fillStyle(color ?? baseColor, 1);
