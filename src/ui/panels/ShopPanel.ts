@@ -176,6 +176,16 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     return btn;
   }
 
+  /** 골드 표시 영역 월드 좌표 */
+  getGoldWorldPos(): { x: number; y: number } {
+    return { x: this.x + PANEL_W - 60, y: this.y + 18 };
+  }
+
+  /** 리롤 버튼 월드 좌표 */
+  getRerollBtnWorldPos(): { x: number; y: number } {
+    return { x: this.x + PANEL_W / 2, y: this.y + 380 };
+  }
+
   private updateRerollButton(): void {
     const cost = this.battleState.freeRerolls > 0
       ? `>> REROLL  (FREE x${this.battleState.freeRerolls})`

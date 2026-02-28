@@ -113,7 +113,7 @@ export class PlayerPanel extends Phaser.GameObjects.Container {
    * - shield: 파란 글로우 (흔들림 없음)
    * - curse : 보라 플래시 + 약한 흔들기
    */
-  playHitEffect(type: 'attack' | 'shield' | 'curse' = 'attack'): void {
+  playHitEffect(type: 'attack' | 'shield' | 'curse' = 'attack', onComplete?: () => void): void {
     const colorMap = {
       attack: 0xff2222,
       shield: 0x3498db,
@@ -135,7 +135,7 @@ export class PlayerPanel extends Phaser.GameObjects.Container {
       alpha: 0,
       duration: 420,
       ease: 'Quad.Out',
-      onComplete: () => this.remove(flash, true),
+      onComplete: () => { this.remove(flash, true); onComplete?.(); },
     });
 
     // 공격·저주는 흔들기

@@ -171,24 +171,20 @@ export class BattleScene extends Phaser.Scene {
       const { target, amount } = data as { target: 'player' | 'enemy'; amount: number };
 
       if (target === 'enemy') {
-        // HP 바 즉시 갱신 → 이후 애니메이션은 눈요기
-        this.refreshUI();
         const toX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
         const toY = ENEMY_Y + 176;
         AttackEffect.shoot(this, CENTER_X, 150, toX, toY, 0xff5500, () => {
           DamageNumber.show(this, toX, ENEMY_Y + 60, amount, 'damage');
-          this.enemyPanel.playHitEffect();
+          this.enemyPanel.playHitEffect('attack', () => this.refreshUI());
           this.sound.play('attack');
         });
       } else {
-        // HP 바 즉시 갱신 → 이후 애니메이션은 눈요기
-        this.refreshUI();
         const src = this.enemyPanel.getActionCardWorldCenter();
         const toX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
         const toY = PLAYER_Y + 176;
         AttackEffect.shootFromEnemy(this, src.x, src.y, toX, toY, () => {
           DamageNumber.show(this, toX, PLAYER_Y + 60, amount, 'damage');
-          this.playerPanel.playHitEffect('attack');
+          this.playerPanel.playHitEffect('attack', () => this.refreshUI());
           this.sound.play('attack');
         });
       }
@@ -197,24 +193,21 @@ export class BattleScene extends Phaser.Scene {
     this.gameEvents.on(GameEvents.SHIELD_GAINED, (data: unknown) => {
       const { target } = data as { target: 'player' | 'enemy'; amount: number };
       if (target === 'player') {
-        // 룰렛 → 플레이어 패널 (파란 방어 이펙트)
         const toX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
         const toY = PLAYER_Y + 176;
         AttackEffect.shootShield(this, CENTER_X, 150, toX, toY, () => {
-          this.playerPanel.playHitEffect('shield');
+          this.playerPanel.playHitEffect('shield', () => this.refreshUI());
           this.sound.play('shield');
         });
       } else {
-        // 적 행동 카드 → 오른쪽으로 뻗었다 U턴 → 적 패널
         const src = this.enemyPanel.getActionCardWorldCenter();
         const toX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
         const toY = ENEMY_Y + 140;
         AttackEffect.shootEnemyShield(this, src.x, src.y, toX, toY, () => {
-          this.enemyPanel.playHitEffect('shield');
+          this.enemyPanel.playHitEffect('shield', () => this.refreshUI());
           this.sound.play('shield');
         });
       }
-      this.refreshUI(); // 실드 바 즉시 반영
     });
 
     this.gameEvents.on(GameEvents.HEAL_APPLIED, (data: unknown) => {
@@ -225,16 +218,14 @@ export class BattleScene extends Phaser.Scene {
 
     this.gameEvents.on(GameEvents.CURSE_TRIGGERED, (data: unknown) => {
       const { damage } = data as { damage: number };
-      // 룰렛 → 플레이어 패널 (저주 이펙트)
       const toX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
       const toY = PLAYER_Y + 176;
       AttackEffect.shootCurse(this, CENTER_X, 150, toX, toY, () => {
         DamageNumber.show(this, toX, PLAYER_Y + 60, damage, 'curse');
-        this.playerPanel.playHitEffect('curse');
+        this.playerPanel.playHitEffect('curse', () => this.refreshUI());
         this.cameras.main.shake(150, 0.005);
         this.sound.play('attack');
       });
-      this.refreshUI();
     });
 
     this.gameEvents.on(GameEvents.SPIN_LANDED, (data: unknown) => {
@@ -243,10 +234,35 @@ export class BattleScene extends Phaser.Scene {
     });
 
     this.gameEvents.on(GameEvents.WAVE_CLEARED, (data: unknown) => {
-      const { wave, goldReward } = data as { wave: number; goldReward: number };
-      this.showMessage(`WAVE ${wave} CLEAR!  +${goldReward} G`, THEME.TEXT_GOLD);
+      const { wave, goldReward, goldBonus, freeRerollBonus } =
+        data as { wave: number; goldReward: number; goldBonus: number; freeRerollBonus: number };
+
       this.waveIndicator.update(this.state.wave, this.state.maxWaves);
-      this.refreshUI();
+
+      // 적 패널 사망 연출
+      this.enemyPanel.playDeathEffect(goldReward, goldBonus, freeRerollBonus, () => {
+        // 연출 완료 후 flying 이펙트 시작
+        const fromX = LEFT_PANEL_X + LEFT_PANEL_W / 2;
+        const fromY = ENEMY_Y + 176;
+        const goldPos   = this.shopPanel.getGoldWorldPos();
+        const rerollPos = this.shopPanel.getRerollBtnWorldPos();
+
+        let doneCount = 0;
+        const onFlyDone = () => {
+          doneCount++;
+          if (doneCount < 2) return;
+          // 두 이펙트 모두 완료 → 실제 반영
+          this.battleSystem.applyNextWave(goldReward, freeRerollBonus);
+          this.enemyPanel.clearDeathOverlay();
+          this.refreshUI();
+          this.showMessage(`WAVE ${wave} CLEAR!`, THEME.TEXT_GOLD);
+        };
+
+        this.flyEffect(fromX, fromY - 10, goldPos.x, goldPos.y,
+          `+${goldReward} G`, 0xFFD700, onFlyDone);
+        this.flyEffect(fromX, fromY + 10, rerollPos.x, rerollPos.y,
+          `x${freeRerollBonus} REROLL`, 0x88CCFF, onFlyDone);
+      });
     });
 
     this.gameEvents.on(GameEvents.BATTLE_ENDED, (data: unknown) => {
@@ -322,6 +338,49 @@ export class BattleScene extends Phaser.Scene {
       duration: 1800,
       ease: 'Quad.Out',
       onComplete: () => msg.destroy(),
+    });
+  }
+
+  /** 텍스트가 from → to 로 날아가며 도착 시 버스트 후 onComplete 호출 */
+  private flyEffect(
+    fromX: number, fromY: number,
+    toX: number,   toY: number,
+    label: string,
+    color: number,
+    onComplete: () => void,
+  ): void {
+    const hex = '#' + color.toString(16).padStart(6, '0');
+    const txt = this.add.text(fromX, fromY, label, {
+      fontSize: '15px', color: hex, fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(200);
+
+    this.tweens.add({
+      targets: txt,
+      x: toX,
+      y: toY,
+      scaleX: 0.45,
+      scaleY: 0.45,
+      alpha: 0.85,
+      duration: 580,
+      ease: 'Cubic.InOut',
+      onComplete: () => {
+        txt.destroy();
+        // 도착지 버스트
+        const burst = this.add.text(toX, toY, label, {
+          fontSize: '13px', color: hex, fontStyle: 'bold',
+          stroke: '#000000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(200);
+        this.tweens.add({
+          targets: burst,
+          alpha: 0,
+          scaleX: 2,
+          scaleY: 2,
+          duration: 280,
+          ease: 'Quad.Out',
+          onComplete: () => { burst.destroy(); onComplete(); },
+        });
+      },
     });
   }
 }

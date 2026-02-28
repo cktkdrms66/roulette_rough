@@ -57,6 +57,11 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
   private cardTypeText: Phaser.GameObjects.Text;
   private cardDescText: Phaser.GameObjects.Text;
 
+  // 사망 연출 오버레이 요소 (clearDeathOverlay로 정리)
+  private deathOverlay?: Phaser.GameObjects.Graphics;
+  private deathGoldLabel?: Phaser.GameObjects.Text;
+  private deathRerollLabel?: Phaser.GameObjects.Text;
+
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
@@ -156,8 +161,66 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
     };
   }
 
-  /** 피격/실드 플래시 효과 */
-  playHitEffect(type: 'attack' | 'shield' = 'attack'): void {
+  /** 사망 연출: 회색 오버레이 + 골드/리롤 텍스트 표시 후 onComplete 호출 */
+  playDeathEffect(
+    goldReward: number,
+    goldBonus: number,
+    freeRerollBonus: number,
+    onComplete: () => void,
+  ): void {
+    // 회색 오버레이
+    this.deathOverlay = this.scene.add.graphics();
+    this.deathOverlay.fillStyle(0x222222, 0.72);
+    this.deathOverlay.fillRoundedRect(0, 0, W, PANEL_H, 8);
+    this.deathOverlay.setAlpha(0);
+    this.add(this.deathOverlay);
+
+    this.scene.tweens.add({
+      targets: this.deathOverlay,
+      alpha: 1,
+      duration: 350,
+      ease: 'Quad.Out',
+    });
+
+    // 골드 텍스트
+    const goldLine = goldBonus > 0
+      ? `+${goldReward} G  (이자 +${goldBonus})`
+      : `+${goldReward} G`;
+    this.deathGoldLabel = this.scene.add.text(W / 2, PANEL_H / 2 - 26, goldLine, {
+      fontSize: '17px', color: '#FFD700', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setAlpha(0);
+    this.add(this.deathGoldLabel);
+
+    // 무료 리롤 텍스트
+    this.deathRerollLabel = this.scene.add.text(W / 2, PANEL_H / 2 + 14, `FREE REROLL  x${freeRerollBonus}`, {
+      fontSize: '14px', color: '#88CCFF', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setAlpha(0);
+    this.add(this.deathRerollLabel);
+
+    // 텍스트 페이드인 후 대기, 콜백 전달
+    this.scene.tweens.add({
+      targets: [this.deathGoldLabel, this.deathRerollLabel],
+      alpha: 1,
+      duration: 280,
+      ease: 'Quad.Out',
+      delay: 280,
+      onComplete: () => {
+        this.scene.time.delayedCall(700, onComplete);
+      },
+    });
+  }
+
+  /** 사망 연출 오버레이 정리 (다음 웨이브 시작 전 호출) */
+  clearDeathOverlay(): void {
+    if (this.deathOverlay)      { this.remove(this.deathOverlay, true);      this.deathOverlay = undefined; }
+    if (this.deathGoldLabel)    { this.remove(this.deathGoldLabel, true);    this.deathGoldLabel = undefined; }
+    if (this.deathRerollLabel)  { this.remove(this.deathRerollLabel, true);  this.deathRerollLabel = undefined; }
+  }
+
+  /** 피격/실드 플래시 효과. onComplete는 플래시 완료 후 호출됨 */
+  playHitEffect(type: 'attack' | 'shield' = 'attack', onComplete?: () => void): void {
     const color = type === 'shield' ? 0x3498db : 0xff2222;
     const alpha = type === 'shield' ? 0.35 : 0.5;
 
@@ -172,7 +235,10 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
       alpha: 0,
       duration: 420,
       ease: 'Quad.Out',
-      onComplete: () => this.remove(flash, true),
+      onComplete: () => {
+        this.remove(flash, true);
+        onComplete?.();
+      },
     });
 
     // 공격은 흔들기

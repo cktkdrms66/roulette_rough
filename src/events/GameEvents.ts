@@ -36,7 +36,7 @@ export interface CurseTriggeredPayload { slotIndex: number; damage: number }
 export interface CardDroppedPayload { cardDef: CardDef; slotIndices: number[] }
 export interface CardPurchasedPayload { cardDef: CardDef }
 export interface ShopRerolledPayload { newCards: CardDef[] }
-export interface WaveClearedPayload { wave: number; goldReward: number }
+export interface WaveClearedPayload { wave: number; goldReward: number; goldBonus: number; freeRerollBonus: number }
 export interface BattleEndedPayload { victory: boolean }
 export interface GoldChangedPayload { amount: number; newTotal: number }
 export interface JokerSelectedPayload { joker: JokerDef }

@@ -223,19 +223,25 @@ export class BattleSystem {
     this.events.emit(GameEvents.BATTLE_ENDED, { victory: false });
   }
 
-  // 웨이브 종료 보상
+  // 웨이브 종료 보상 (연출용 데이터만 emit, 실제 반영은 applyNextWave에서)
   private endWave(): void {
     const goldBonus = Math.floor(this.state.playerGold / 5);
     const goldReward = 3 + this.state.wave + goldBonus;
-    this.state.freeRerolls += 1;
-    this.state.playerGold += goldReward;
-    // 성장형 조커 전투 내 누적치 리셋 (웨이브 간은 리셋하지 않음 - 전투 종료 시에만)
-    // globalAttackFlat은 전투 전체 유지
+    const freeRerollBonus = 1;
 
     this.events.emit(GameEvents.WAVE_CLEARED, {
       wave: this.state.wave - 1,
       goldReward,
+      goldBonus,
+      freeRerollBonus,
     });
+  }
+
+  // BattleScene 연출 완료 후 호출 — 실제 상태 반영 + 다음 웨이브 진행
+  applyNextWave(goldReward: number, freeRerollBonus: number): void {
+    this.state.playerGold += goldReward;
+    this.state.freeRerolls += freeRerollBonus;
+
     this.events.emit(GameEvents.GOLD_CHANGED, {
       amount: goldReward,
       newTotal: this.state.playerGold,
