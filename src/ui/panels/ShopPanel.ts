@@ -7,10 +7,11 @@ import { RouletteWheel } from '../roulette/RouletteWheel';
 import { TypedEventEmitter, GameEvents } from '../../events/GameEvents';
 import { CardSystem } from '../../systems/CardSystem';
 import { ShopSystem } from '../../systems/ShopSystem';
+import { THEME } from '../theme';
 
 // 상단-좌측 원점 (0, 0) 기준
 const PANEL_W = 528;
-const PANEL_H = 500; // 카드 cy=210, H=175 → 하단 297, 리롤 버튼 380, 힌트 482
+const PANEL_H = 500;
 
 export class ShopPanel extends Phaser.GameObjects.Container {
   private cardViews: CardView[] = [];
@@ -42,45 +43,57 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     this.shopSystem  = new ShopSystem();
     this.dragController = new DragCardController(scene, wheel, events, state);
 
-    // ── 배경 ──────────────────────────────────────
-    const bg = scene.add.graphics();
-    bg.fillStyle(0x1a1a2e, 0.95);
-    bg.fillRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
-    bg.lineStyle(2, 0xf39c12, 1);
-    bg.strokeRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
-    this.add(bg);
+    // ── 반투명 다크 오버레이 (벽돌 벽 위에 덮임) ────────────────
+    const overlay = scene.add.graphics();
+    overlay.fillStyle(THEME.PANEL_OVERLAY, 0.52);
+    overlay.fillRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
+    this.add(overlay);
 
-    // ── 헤더 행 ────────────────────────────────────
-    const title = scene.add.text(16, 14, '🛒 상점', {
-      fontSize: '16px', color: '#f39c12', fontStyle: 'bold',
+    // ── 골드 이중 테두리 ─────────────────────────────────────────
+    const border = scene.add.graphics();
+    border.lineStyle(2, THEME.GOLD_DARK, 1);
+    border.strokeRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
+    border.lineStyle(1, THEME.GOLD, 0.5);
+    border.strokeRoundedRect(4, 4, PANEL_W - 8, PANEL_H - 8, 6);
+    this.add(border);
+
+    // ── 타이틀 바 ────────────────────────────────────────────────
+    const titleBar = scene.add.graphics();
+    titleBar.fillStyle(THEME.GOLD_DARK, 1);
+    titleBar.fillRoundedRect(2, 2, PANEL_W - 4, 36, { tl: 7, tr: 7, bl: 0, br: 0 });
+    this.add(titleBar);
+
+    // ── 헤더 행 ──────────────────────────────────────────────────
+    const title = scene.add.text(16, 10, '\u2666  SHOP  \u2666', {
+      fontSize: '14px', color: '#1a0a08', fontStyle: 'bold',
     }).setOrigin(0, 0);
     this.add(title);
 
-    this.goldText = scene.add.text(PANEL_W - 16, 14, '💰 0', {
-      fontSize: '15px', color: '#f1c40f',
+    this.goldText = scene.add.text(PANEL_W - 16, 10, 'GOLD  0', {
+      fontSize: '13px', color: '#1a0a08', fontStyle: 'bold',
     }).setOrigin(1, 0);
     this.add(this.goldText);
 
-    // 헤더 구분선
+    // ── 헤더 구분선 (골드) ───────────────────────────────────────
     const hdrSep = scene.add.graphics();
-    hdrSep.lineStyle(1, 0xf39c12, 0.35);
+    hdrSep.lineStyle(1, THEME.GOLD_DARK, 0.5);
     hdrSep.beginPath();
     hdrSep.moveTo(12, 44);
     hdrSep.lineTo(PANEL_W - 12, 44);
     hdrSep.strokePath();
     this.add(hdrSep);
 
-    // ── 리롤 버튼 ──────────────────────────────────
+    // ── 리롤 버튼 ────────────────────────────────────────────────
     this.rerollBtn = this.createRerollButton(scene);
     this.add(this.rerollBtn);
 
-    // ── 드래그 힌트 ────────────────────────────────
-    this.hintText = scene.add.text(PANEL_W / 2, PANEL_H - 18, '💡 드래그 카드 → 룰렛 슬롯에 놓기', {
-      fontSize: '11px', color: '#4d6a7a',
+    // ── 드래그 힌트 ──────────────────────────────────────────────
+    this.hintText = scene.add.text(PANEL_W / 2, PANEL_H - 18, 'DRAG CARD  >>  DROP ON ROULETTE SLOT', {
+      fontSize: '10px', color: THEME.TEXT_DIM,
     }).setOrigin(0.5, 1);
     this.add(this.hintText);
 
-    // ── 이벤트 리스너 ──────────────────────────────
+    // ── 이벤트 리스너 ────────────────────────────────────────────
     this.shopEvents.on(GameEvents.SHOP_REROLLED, (data: unknown) => {
       const { newCards } = data as { newCards: CardDef[] };
       this.rebuildCards(newCards);
@@ -96,7 +109,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
     this.shopEvents.on(GameEvents.GOLD_CHANGED, () => {
       this.updateRerollButton();
-      this.goldText.setText(`💰 ${this.battleState.playerGold}`);
+      this.goldText.setText(`GOLD  ${this.battleState.playerGold}`);
     });
   }
 
@@ -105,7 +118,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     this.dragController.updateBattleState(state);
     this.rebuildCards(state.shopCards);
     this.updateRerollButton();
-    this.goldText.setText(`💰 ${state.playerGold}`);
+    this.goldText.setText(`GOLD  ${state.playerGold}`);
   }
 
   private rebuildCards(cards: CardDef[]): void {
@@ -115,7 +128,7 @@ export class ShopPanel extends Phaser.GameObjects.Container {
     const spacing = CardView.WIDTH + 20;
     const cx = PANEL_W / 2;
     const startX = cx - (cards.length - 1) * spacing / 2;
-    const cy = 210; // 카드 중심 Y (헤더 44px 아래, 큰 카드(175px) 기준)
+    const cy = 210;
 
     for (let i = 0; i < cards.length; i++) {
       const card     = cards[i];
@@ -145,12 +158,11 @@ export class ShopPanel extends Phaser.GameObjects.Container {
   }
 
   private createRerollButton(scene: Phaser.Scene): Phaser.GameObjects.Container {
-    // 카드 아래 중앙에 크게 배치
     const btn = scene.add.container(PANEL_W / 2, 380);
 
     this.rerollBtnBg   = scene.add.graphics();
     this.rerollBtnText = scene.add.text(0, 0, '', {
-      fontSize: '14px', color: '#ffffff', align: 'center',
+      fontSize: '13px', color: '#1a0a08', fontStyle: 'bold', align: 'center',
     }).setOrigin(0.5, 0.5);
 
     btn.add([this.rerollBtnBg, this.rerollBtnText]);
@@ -166,8 +178,8 @@ export class ShopPanel extends Phaser.GameObjects.Container {
 
   private updateRerollButton(): void {
     const cost = this.battleState.freeRerolls > 0
-      ? `🔄 리롤  (무료 × ${this.battleState.freeRerolls})`
-      : `🔄 리롤  (${this.battleState.rerollCost} 💰)`;
+      ? `>> REROLL  (FREE x${this.battleState.freeRerolls})`
+      : `>> REROLL  (${this.battleState.rerollCost} G)`;
     this.rerollBtnText.setText(cost);
     this.rerollBtn.setAlpha(this.shopSystem.canReroll(this.battleState) ? 1 : 0.5);
     this.drawRerollBtn(false);
@@ -176,8 +188,24 @@ export class ShopPanel extends Phaser.GameObjects.Container {
   private drawRerollBtn(hovered: boolean): void {
     this.rerollBtnBg.clear();
     const canReroll = this.shopSystem.canReroll(this.battleState);
-    const color     = canReroll ? (hovered ? 0x27ae60 : 0x1e8449) : 0x5d6d7e;
-    this.rerollBtnBg.fillStyle(color, 1);
-    this.rerollBtnBg.fillRoundedRect(-110, -30, 220, 60, 10);
+
+    if (canReroll) {
+      // 골드 버튼 스타일
+      const fillColor = hovered ? THEME.GOLD : THEME.GOLD_DARK;
+      this.rerollBtnBg.fillStyle(fillColor, 1);
+      this.rerollBtnBg.fillRoundedRect(-110, -30, 220, 60, 8);
+      // 골드 이중 테두리
+      this.rerollBtnBg.lineStyle(2, THEME.GOLD, hovered ? 1 : 0.7);
+      this.rerollBtnBg.strokeRoundedRect(-110, -30, 220, 60, 8);
+      this.rerollBtnBg.lineStyle(1, 0xffffff, 0.2);
+      this.rerollBtnBg.strokeRoundedRect(-107, -27, 214, 54, 6);
+      this.rerollBtnText.setColor('#1a0a08');
+    } else {
+      this.rerollBtnBg.fillStyle(0x2a1a0a, 1);
+      this.rerollBtnBg.fillRoundedRect(-110, -30, 220, 60, 8);
+      this.rerollBtnBg.lineStyle(1, THEME.GOLD_DARK, 0.3);
+      this.rerollBtnBg.strokeRoundedRect(-110, -30, 220, 60, 8);
+      this.rerollBtnText.setColor(THEME.TEXT_DIM);
+    }
   }
 }

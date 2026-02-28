@@ -15,7 +15,7 @@ export class DamageNumber {
       curse: '#aa44ff',
     };
 
-    const prefix = type === 'heal' ? '+' : type === 'shield' ? '🛡' : '-';
+    const prefix = type === 'heal' ? '+' : type === 'shield' ? 'DEF ' : '-';
     const text = scene.add.text(x, y, `${prefix}${value}`, {
       fontSize: '24px',
       color: colorMap[type],

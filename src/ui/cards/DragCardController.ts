@@ -84,9 +84,13 @@ export class DragCardController {
         // 필터 유효성 검사
         const isValid = this.isValidTarget(cardView.card, group);
         this.wheel.setHighlight(group, isValid ? 'valid' : 'invalid');
+
+        // 유효 슬롯 위에 올라가면 카드 반투명
+        cardView.setAlpha(isValid ? 0.45 : 1);
       } else {
         this.currentHoveredIndices = [];
         this.wheel.clearHighlights();
+        cardView.setAlpha(1);
       }
     };
 
@@ -118,6 +122,7 @@ export class DragCardController {
       cardView.destroy();
     } else {
       // 드롭 취소 → 원위치로 Back.Out 트윈
+      cardView.setAlpha(1);
       this.scene.tweens.add({
         targets: cardView,
         x: this.dragOriginX,

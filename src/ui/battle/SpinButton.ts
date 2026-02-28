@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { THEME } from '../theme';
 
 export class SpinButton extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.Graphics;
@@ -11,14 +12,13 @@ export class SpinButton extends Phaser.GameObjects.Container {
     this.bg = scene.add.graphics();
     this.label = scene.add.text(0, 0, 'SPIN', {
       fontSize: '22px',
-      color: '#ffffff',
+      color: '#1a0a08',
       fontStyle: 'bold',
     }).setOrigin(0.5, 0.5);
 
     this.add([this.bg, this.label]);
     this.drawButton(false);
 
-    // 인터랙션
     this.setSize(140, 50);
     this.setInteractive({ useHandCursor: true });
 
@@ -26,7 +26,7 @@ export class SpinButton extends Phaser.GameObjects.Container {
     this.on('pointerout', () => this.drawButton(false));
     this.on('pointerdown', () => {
       if (this.enabled) {
-        this.scene.cameras.main.shake(80, 0.003);
+        scene.cameras.main.shake(80, 0.003);
         onClick();
       }
     });
@@ -36,20 +36,31 @@ export class SpinButton extends Phaser.GameObjects.Container {
 
   private drawButton(hovered: boolean): void {
     this.bg.clear();
-    const color = this.enabled
-      ? (hovered ? 0xe74c3c : 0xc0392b)
-      : 0x7f8c8d;
 
-    this.bg.fillStyle(color, 1);
-    this.bg.fillRoundedRect(-70, -25, 140, 50, 10);
-    this.bg.lineStyle(2, 0xffffff, 0.3);
-    this.bg.strokeRoundedRect(-70, -25, 140, 50, 10);
+    if (this.enabled) {
+      // 골드 카지노 버튼
+      const fill = hovered ? THEME.GOLD : THEME.GOLD_DARK;
+      this.bg.fillStyle(fill, 1);
+      this.bg.fillRoundedRect(-70, -25, 140, 50, 10);
+      // 이중 골드 테두리
+      this.bg.lineStyle(2, THEME.GOLD, 1);
+      this.bg.strokeRoundedRect(-70, -25, 140, 50, 10);
+      this.bg.lineStyle(1, 0xffffff, hovered ? 0.4 : 0.2);
+      this.bg.strokeRoundedRect(-67, -22, 134, 44, 8);
+      this.label.setColor('#1a0a08');
+    } else {
+      this.bg.fillStyle(0x2a1a0a, 1);
+      this.bg.fillRoundedRect(-70, -25, 140, 50, 10);
+      this.bg.lineStyle(1, THEME.GOLD_DARK, 0.3);
+      this.bg.strokeRoundedRect(-70, -25, 140, 50, 10);
+      this.label.setColor(THEME.TEXT_DIM);
+    }
   }
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     this.drawButton(false);
-    this.label.setAlpha(enabled ? 1 : 0.5);
+    this.label.setAlpha(enabled ? 1 : 0.6);
   }
 
   setText(text: string): void {

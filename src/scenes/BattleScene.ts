@@ -8,6 +8,7 @@ import { enrichReplaceCards } from '../systems/ShopSystem';
 import { RouletteWheel } from '../ui/roulette/RouletteWheel';
 import { PlayerPanel } from '../ui/panels/PlayerPanel';
 import { EnemyPanel } from '../ui/panels/EnemyPanel';
+import { THEME, drawBricks } from '../ui/theme';
 import { JokerPanel } from '../ui/panels/JokerPanel';
 import { ShopPanel } from '../ui/panels/ShopPanel';
 import { SpinButton } from '../ui/battle/SpinButton';
@@ -80,12 +81,50 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.cameras.main;
 
-    // ── 배경 ────────────────────────────────────────
-    this.add.rectangle(0, 0, width, height, 0x0e0e1a).setOrigin(0);
+    // ── 배경 (다크 레드-블랙) ───────────────────────
+    this.add.rectangle(0, 0, width, height, THEME.BG_DARK).setOrigin(0);
 
-    // 열 구분선 (장식)
+    // ── 3열 전체: 벽돌 배경 ─────────────────────────
+    // 하나의 Graphics에 전체 화면 벽돌을 한 번에 그림
+    const wallBrick = this.add.graphics();
+    wallBrick.fillStyle(THEME.BRICK_MORTAR, 1);
+    wallBrick.fillRect(0, 0, width, height);
+    drawBricks(wallBrick, width, height, 0, 0);
+
+    // ── 스팟라이트 비네트 ────────────────────────────
+    // 룰렛 중심에서 방사형으로 어두워지는 조명 효과
+    // Graphics의 ring(annulus) 방식: 바깥 원 - 안쪽 원 = 도넛 모양
+    const spotlight = this.add.graphics();
+    const spotX = CENTER_X;
+    const spotY = 320;   // 룰렛 휠 중심 Y
+    const STEPS  = 32;
+    const MIN_R  = 130;  // 스팟라이트 밝은 중심 반경
+    const MAX_R  = 560;  // 코너까지 완전히 덮는 반경
+
+    for (let i = 0; i < STEPS; i++) {
+      const t      = i / STEPS;
+      const innerR = MIN_R + (MAX_R - MIN_R) * t;
+      const outerR = MIN_R + (MAX_R - MIN_R) * (i + 1) / STEPS;
+      const alpha  = t * t * 0.88; // 2차 커브 → 중심은 투명, 가장자리는 짙게
+
+      spotlight.fillStyle(THEME.BG_DARK, alpha);
+      spotlight.beginPath();
+      spotlight.arc(spotX, spotY, outerR, 0, Math.PI * 2, false);
+      spotlight.arc(spotX, spotY, innerR, 0, Math.PI * 2, true);
+      spotlight.closePath();
+      spotlight.fillPath();
+    }
+
+    // ── 상단 장식 라인 (골드) ────────────────────────
+    const topLine = this.add.graphics();
+    topLine.lineStyle(1, THEME.GOLD_DARK, 0.5);
+    topLine.beginPath();
+    topLine.moveTo(0, 44); topLine.lineTo(width, 44);
+    topLine.strokePath();
+
+    // ── 열 구분선 (골드) ─────────────────────────────
     const dividers = this.add.graphics();
-    dividers.lineStyle(1, 0x1c2a3a, 1);
+    dividers.lineStyle(1.5, THEME.GOLD_DARK, 0.6);
     dividers.beginPath();
     dividers.moveTo(295, 0); dividers.lineTo(295, height);
     dividers.moveTo(736, 0); dividers.lineTo(736, height);
@@ -205,7 +244,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.gameEvents.on(GameEvents.WAVE_CLEARED, (data: unknown) => {
       const { wave, goldReward } = data as { wave: number; goldReward: number };
-      this.showMessage(`웨이브 ${wave} 클리어!  +${goldReward}💰`, '#f1c40f');
+      this.showMessage(`WAVE ${wave} CLEAR!  +${goldReward} G`, THEME.TEXT_GOLD);
       this.waveIndicator.update(this.state.wave, this.state.maxWaves);
       this.refreshUI();
     });

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { MAP_NODES, MapNode, getStartNode } from '../data/maps';
 import { BattleState } from '../types/battle.types';
+import { THEME, drawBricks } from '../ui/theme';
 
 export class MapScene extends Phaser.Scene {
   private currentNodeId: string = 'start';
@@ -20,13 +21,21 @@ export class MapScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.cameras.main;
 
-    // 배경
-    this.add.rectangle(0, 0, width, height, 0x0d1117).setOrigin(0);
+    // 배경 (벽돌)
+    this.add.rectangle(0, 0, width, height, THEME.BG_DARK).setOrigin(0);
+    const wallG = this.add.graphics();
+    wallG.fillStyle(THEME.BRICK_MORTAR, 1);
+    wallG.fillRect(0, 0, width, height);
+    drawBricks(wallG, width, height, 0, 0);
+    // 다크 오버레이
+    const ov = this.add.graphics();
+    ov.fillStyle(0x000000, 0.55);
+    ov.fillRect(0, 0, width, height);
 
     // 제목
-    this.add.text(width / 2, 30, 'RouletteRough - 맵', {
+    this.add.text(width / 2, 30, 'ROULETTE  ROUGH', {
       fontSize: '24px',
-      color: '#e74c3c',
+      color: THEME.TEXT_GOLD,
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
@@ -96,9 +105,9 @@ export class MapScene extends Phaser.Scene {
     }
 
     const iconMap: Record<string, string> = {
-      Battle: '⚔️',
-      Elite: '💀',
-      Boss: '👹',
+      Battle: '/\\',
+      Elite:  'SK',
+      Boss:   '!!',
     };
 
     const label = this.add.text(0, -4, iconMap[node.type] ?? '?', {

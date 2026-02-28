@@ -1,21 +1,23 @@
 import Phaser from 'phaser';
 import { JokerDef } from '../../types/joker.types';
+import { THEME } from '../theme';
 
 const PANEL_W = 528;
 const PANEL_H = 200;
 const SLOT_W   = 84;
 const SLOT_H   = 148;
-const SLOT_GAP = 17; // (528-40-84*5)/4
+const SLOT_GAP = 17;
 
+// 이모지 없이 카드 수트 심볼 + 약어 조합 (Unicode 기본 심볼, 이모지 아님)
 const JOKER_ICONS: Record<string, string> = {
-  JOKER_CURSE:         '💀',
-  JOKER_DOPAMINE:      '⚡',
-  JOKER_GOLD:          '💰',
-  JOKER_ATTACK:        '⚔️',
-  JOKER_GROWTH:        '📈',
-  JOKER_FOOL:          '🃏',
-  JOKER_REVERSE_CURSE: '🔄',
-  JOKER_RIGHT:         '➡️',
+  JOKER_CURSE:         '\u2660\nCRSE', // ♠
+  JOKER_DOPAMINE:      '\u2665\nZAP',  // ♥
+  JOKER_GOLD:          '\u2666\nGOLD', // ♦
+  JOKER_ATTACK:        '\u2663\nATK',  // ♣
+  JOKER_GROWTH:        '\u2665\nGRW',  // ♥
+  JOKER_FOOL:          '\u2660\nJKR',  // ♠
+  JOKER_REVERSE_CURSE: '\u2666\nREV',  // ♦
+  JOKER_RIGHT:         '\u2663\nRGT',  // ♣
 };
 
 export class JokerPanel extends Phaser.GameObjects.Container {
@@ -27,18 +29,32 @@ export class JokerPanel extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
-    const bg = scene.add.graphics();
-    bg.fillStyle(0x1a1a2e, 0.92);
-    bg.fillRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
-    bg.lineStyle(2, 0x7d3c98, 1);
-    bg.strokeRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
-    this.add(bg);
+    // ── 반투명 다크 오버레이 (벽돌 벽 위에 덮임) ────────────────
+    const overlay = scene.add.graphics();
+    overlay.fillStyle(THEME.PANEL_OVERLAY, 0.52);
+    overlay.fillRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
+    this.add(overlay);
 
-    const title = scene.add.text(PANEL_W / 2, 12, '🃏 조커 슬롯', {
-      fontSize: '15px', color: '#9b59b6', fontStyle: 'bold',
+    // ── 골드 이중 테두리 ─────────────────────────────────────────
+    const border = scene.add.graphics();
+    border.lineStyle(2, THEME.GOLD_DARK, 1);
+    border.strokeRoundedRect(0, 0, PANEL_W, PANEL_H, 8);
+    border.lineStyle(1, THEME.GOLD, 0.5);
+    border.strokeRoundedRect(4, 4, PANEL_W - 8, PANEL_H - 8, 6);
+    this.add(border);
+
+    // ── 타이틀 바 ────────────────────────────────────────────────
+    const titleBar = scene.add.graphics();
+    titleBar.fillStyle(0x3d1f00, 1);
+    titleBar.fillRoundedRect(2, 2, PANEL_W - 4, 32, { tl: 7, tr: 7, bl: 0, br: 0 });
+    this.add(titleBar);
+
+    const title = scene.add.text(PANEL_W / 2, 10, '\u2660  JOKER SLOTS  \u2660', {
+      fontSize: '13px', color: THEME.TEXT_GOLD, fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     this.add(title);
 
+    // ── 슬롯 5개 ─────────────────────────────────────────────────
     for (let i = 0; i < 5; i++) {
       const sx = 20 + i * (SLOT_W + SLOT_GAP);
       const slot = this.buildSlot(scene, sx, 40);
@@ -46,11 +62,11 @@ export class JokerPanel extends Phaser.GameObjects.Container {
       this.add(slot);
     }
 
-    // 툴팁 (씬 최상단에 직접 추가해야 ShopPanel에 가려지지 않음)
+    // ── 툴팁 ─────────────────────────────────────────────────────
     this.tooltipBg   = scene.add.graphics();
     this.tooltipText = scene.add.text(8, 8, '', {
       fontSize: '11px',
-      color: '#ecf0f1',
+      color: THEME.TEXT_CREAM,
       wordWrap: { width: 160 },
       lineSpacing: 3,
     });
@@ -64,22 +80,26 @@ export class JokerPanel extends Phaser.GameObjects.Container {
     const slot = scene.add.container(x, y);
 
     const slotBg = scene.add.graphics();
-    slotBg.fillStyle(0x2c3e50, 1);
+    // 빈 슬롯: 벽 위에 다크 오버레이만
+    slotBg.fillStyle(THEME.PANEL_OVERLAY, 0.65);
     slotBg.fillRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
-    slotBg.lineStyle(1, 0x34495e, 1);
+    slotBg.lineStyle(1, THEME.GOLD_DARK, 0.4);
     slotBg.strokeRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
 
-    const iconText = scene.add.text(SLOT_W / 2, SLOT_H / 2 - 18, '', {
-      fontSize: '28px',
+    const iconText = scene.add.text(SLOT_W / 2, SLOT_H / 2 - 14, '', {
+      fontSize: '18px',
+      color: THEME.TEXT_GOLD,
+      fontStyle: 'bold',
+      align: 'center',
     }).setOrigin(0.5, 0.5).setVisible(false);
 
-    const nameText = scene.add.text(SLOT_W / 2, SLOT_H / 2 + 30, '', {
-      fontSize: '9px', color: '#ecf0f1', align: 'center',
+    const nameText = scene.add.text(SLOT_W / 2, SLOT_H / 2 + 34, '', {
+      fontSize: '9px', color: THEME.TEXT_CREAM, align: 'center',
       wordWrap: { width: SLOT_W - 6 },
     }).setOrigin(0.5, 0.5).setVisible(false);
 
-    const emptyText = scene.add.text(SLOT_W / 2, SLOT_H / 2, '빈\n슬롯', {
-      fontSize: '11px', color: '#4d6a7a', align: 'center',
+    const emptyText = scene.add.text(SLOT_W / 2, SLOT_H / 2, 'EMPTY', {
+      fontSize: '9px', color: THEME.TEXT_DIM, align: 'center',
     }).setOrigin(0.5, 0.5);
 
     slot.add([slotBg, iconText, nameText, emptyText]);
@@ -94,12 +114,13 @@ export class JokerPanel extends Phaser.GameObjects.Container {
     const th = this.tooltipText.height + pad * 2;
 
     this.tooltipBg.clear();
-    this.tooltipBg.fillStyle(0x0d0d1a, 0.97);
+    this.tooltipBg.fillStyle(THEME.BRICK_MORTAR, 0.97);
     this.tooltipBg.fillRoundedRect(0, 0, tw, th, 6);
-    this.tooltipBg.lineStyle(1, 0x9b59b6, 1);
+    this.tooltipBg.lineStyle(1, THEME.GOLD_DARK, 1);
     this.tooltipBg.strokeRoundedRect(0, 0, tw, th, 6);
+    this.tooltipBg.lineStyle(1, THEME.GOLD, 0.5);
+    this.tooltipBg.strokeRoundedRect(2, 2, tw - 4, th - 4, 5);
 
-    // 씬 월드 좌표로 변환 (컨테이너가 씬 루트에 있으므로 this.x/y 더함)
     const worldX = this.x + slot.x;
     const worldY = this.y + slot.y;
     const tipY = worldY - th - 6;
@@ -120,16 +141,19 @@ export class JokerPanel extends Phaser.GameObjects.Container {
       const emptyText = slot.getAt(3) as Phaser.GameObjects.Text;
 
       if (jokers[i]) {
+        // 활성 슬롯: 퍼플-다크 골드 테마
         slotBg.clear();
-        slotBg.fillStyle(0x6c3483, 1);
+        slotBg.fillStyle(0x1e0a2e, 1);
         slotBg.fillRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
-        slotBg.lineStyle(2, 0x9b59b6, 1);
+        slotBg.lineStyle(2, THEME.GOLD, 0.9);
         slotBg.strokeRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
-        iconText.setText(JOKER_ICONS[jokers[i].id] ?? '🃏').setVisible(true);
+        slotBg.lineStyle(1, 0x9b59b6, 0.5);
+        slotBg.strokeRoundedRect(3, 3, SLOT_W - 6, SLOT_H - 6, 4);
+
+        iconText.setText(JOKER_ICONS[jokers[i].id] ?? '\u2660\nJKR').setVisible(true);
         nameText.setText(jokers[i].name).setVisible(true);
         emptyText.setVisible(false);
 
-        // 툴팁 이벤트 등록
         const joker = jokers[i];
         slot.setInteractive(new Phaser.Geom.Rectangle(0, 0, SLOT_W, SLOT_H), Phaser.Geom.Rectangle.Contains);
         slot.removeAllListeners('pointerover');
@@ -138,9 +162,9 @@ export class JokerPanel extends Phaser.GameObjects.Container {
         slot.on('pointerout',  () => this.hideTooltip());
       } else {
         slotBg.clear();
-        slotBg.fillStyle(0x2c3e50, 1);
+        slotBg.fillStyle(THEME.PANEL_OVERLAY, 0.65);
         slotBg.fillRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
-        slotBg.lineStyle(1, 0x34495e, 1);
+        slotBg.lineStyle(1, THEME.GOLD_DARK, 0.4);
         slotBg.strokeRoundedRect(0, 0, SLOT_W, SLOT_H, 6);
         iconText.setVisible(false);
         nameText.setVisible(false);

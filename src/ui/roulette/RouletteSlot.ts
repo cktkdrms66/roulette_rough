@@ -13,36 +13,38 @@ function getValueLabel(slot: Slot, skill: SkillDef): string {
     case 'FIRE_BOLT':
     case 'THUNDER_CLAP':
     case 'COLD_PUNCH':
-      return flat > 0 ? `⚔${base}+${flat}` : `⚔${base}`;
+      return flat > 0 ? `ATK ${base}+${flat}` : `ATK ${base}`;
 
     case 'RAPID_STRIKE': {
       const hits = skill.hitCount ?? 3;
-      return flat > 0 ? `⚔${base}+${flat}×${hits}` : `⚔${base}×${hits}`;
+      return flat > 0 ? `ATK ${base}+${flat}x${hits}` : `ATK ${base}x${hits}`;
     }
 
     case 'DEFENSE':
-      return flat > 0 ? `🛡${base}+${flat}` : `🛡${base}`;
+      return flat > 0 ? `DEF ${base}+${flat}` : `DEF ${base}`;
 
     case 'HEAL':
-      return flat > 0 ? `💚${base}+${flat}` : `💚${base}`;
+      return flat > 0 ? `HLR ${base}+${flat}` : `HLR ${base}`;
 
     case 'DEEP_BREATH':
-      return `×${skill.specialParam ?? 2}`;
+      return `x${skill.specialParam ?? 2}`;
 
     case 'CURSE':
     case 'HEAVY_CURSE':
-      return `💀${base}`;
+      return `CRS ${base}`;
 
     default:
       return base > 0 ? `${base}` : '';
   }
 }
 
-// 카테고리별 색상
+// 카테고리별 색상 (카지노 스타일 - 선명하고 진한 색상)
 const CATEGORY_COLORS: Record<string, number> = {
-  Attack: 0xc0392b,
-  Transform: 0x2980b9,
-  Curse: 0x8e44ad,
+  Attack:    0xCC2200,  // 딥 레드
+  Transform: 0x1e3a8a,  // 딥 블루
+  Curse:     0x6b21a8,  // 딥 퍼플
+  Defense:   0x1a5c2a,  // 카지노 그린
+  Heal:      0xB8860B,  // 다크 골드
 };
 
 const HIGHLIGHT_VALID = 0x27ae60;
@@ -114,7 +116,7 @@ export class RouletteSlot extends Phaser.GameObjects.Container {
     );
 
     // 스킬명 + 수치 표시
-    const namePrefix = this.slot.tempCurseTimer > 0 ? '⚠️' : '';
+    const namePrefix = this.slot.tempCurseTimer > 0 ? '! ' : '';
     const valueLine = getValueLabel(this.slot, skill);
     const labelText = `${namePrefix}${skill.name}\n${valueLine}`;
 

@@ -3,6 +3,7 @@ import { Slot } from '../../types/slot.types';
 import { RouletteSlot } from './RouletteSlot';
 import { RouletteNeedle } from './RouletteNeedle';
 import { makeDraggable } from '../utils/makeDraggable';
+import { THEME } from '../theme';
 
 const INNER_RADIUS = 70;
 const OUTER_RADIUS = 170;
@@ -20,13 +21,24 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
 
     this.segmentsContainer = scene.add.container(0, 0);
 
-    // 배경 원
+    // ── 배경 원 (다크 레드-블랙) ────────────────────────────────
     const bg = scene.add.graphics();
-    bg.fillStyle(0x2c3e50, 1);
-    bg.fillCircle(0, 0, OUTER_RADIUS + 5);
-    bg.lineStyle(3, 0x34495e, 1);
-    bg.strokeCircle(0, 0, OUTER_RADIUS + 5);
+    bg.fillStyle(THEME.BG_DARK, 1);
+    bg.fillCircle(0, 0, OUTER_RADIUS + 8);
     this.segmentsContainer.add(bg);
+
+    // ── 3겹 골드 외곽 링 ─────────────────────────────────────────
+    const rings = scene.add.graphics();
+    // 바깥 링 (3px, 밝은 골드)
+    rings.lineStyle(3, THEME.GOLD, 1);
+    rings.strokeCircle(0, 0, OUTER_RADIUS + 7);
+    // 중간 간격 (2px 간격)
+    rings.lineStyle(1, THEME.GOLD_DARK, 0.8);
+    rings.strokeCircle(0, 0, OUTER_RADIUS + 3);
+    // 안쪽 링 (2px, 다크 골드)
+    rings.lineStyle(2, THEME.GOLD_DARK, 1);
+    rings.strokeCircle(0, 0, OUTER_RADIUS + 0);
+    this.segmentsContainer.add(rings);
 
     // 각 슬롯 세그먼트 생성
     for (const slot of slots) {
@@ -35,19 +47,23 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
       this.segmentsContainer.add(slotView);
     }
 
-    // 중앙 원
+    // ── 중앙 원 (다크, 골드 테두리) ─────────────────────────────
     const center = scene.add.graphics();
-    center.fillStyle(0x1a252f, 1);
+    center.fillStyle(THEME.BG_DARK, 1);
     center.fillCircle(0, 0, INNER_RADIUS - 2);
-    center.lineStyle(2, 0x95a5a6, 1);
+    // 이중 골드 링 (중앙)
+    center.lineStyle(2, THEME.GOLD, 1);
     center.strokeCircle(0, 0, INNER_RADIUS - 2);
+    center.lineStyle(1, THEME.GOLD_DARK, 0.7);
+    center.strokeCircle(0, 0, INNER_RADIUS - 5);
     this.segmentsContainer.add(center);
 
-    // 중앙 텍스트
-    this.centerLabel = scene.add.text(0, 0, 'SPIN', {
-      fontSize: '18px',
-      color: '#ecf0f1',
+    // 중앙 텍스트 (♠ 심볼 + SPIN)
+    this.centerLabel = scene.add.text(0, 0, '\u2660\nSPIN', {
+      fontSize: '16px',
+      color: THEME.TEXT_GOLD,
       fontStyle: 'bold',
+      align: 'center',
     }).setOrigin(0.5, 0.5);
     this.segmentsContainer.add(this.centerLabel);
 
@@ -78,7 +94,7 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
   spinTo(finalAngle: number, onComplete: () => void): void {
     if (this.spinning) return;
     this.spinning = true;
-    this.centerLabel.setText('...');
+    this.centerLabel.setText('\u2660\n...');
 
     this.scene.tweens.add({
       targets: this.segmentsContainer,
@@ -87,7 +103,7 @@ export class RouletteWheel extends Phaser.GameObjects.Container {
       ease: 'Cubic.Out',
       onComplete: () => {
         this.spinning = false;
-        this.centerLabel.setText('SPIN');
+        this.centerLabel.setText('\u2660\nSPIN');
         onComplete();
       },
     });

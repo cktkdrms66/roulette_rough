@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { EnemyState } from '../../types/battle.types';
+import { THEME } from '../theme';
 
 const Y = {
   TITLE:        18,
@@ -22,25 +23,25 @@ const CARD_H   = 166;  // 카드 높이 (178 + 166 = 344, 패널 끝 근처)
 const CY = {
   HEADER:   10,  // "다음 행동" 라벨
   DIVIDER:  28,  // 헤더 구분선
-  ICON:     38,  // 큰 아이콘 이모지
+  ICON:     38,  // 큰 심볼
   TYPE:     80,  // 행동 타입 + 수치
   DESC:    104,  // 설명 텍스트
 };
 
 const TYPE_COLOR: Record<string, number> = {
-  Attack: 0xe74c3c,
-  Defend: 0x3498db,
-  Curse:  0x9b59b6,
+  Attack: 0xCC2200,
+  Defend: 0x1a5c2a,
+  Curse:  0x6b21a8,
 };
 const TYPE_LABEL: Record<string, string> = {
-  Attack: '공격',
-  Defend: '방어',
-  Curse:  '저주',
+  Attack: 'ATTACK',
+  Defend: 'DEFEND',
+  Curse:  'CURSE',
 };
 const TYPE_ICON: Record<string, string> = {
-  Attack: '⚔️',
-  Defend: '🛡️',
-  Curse:  '💜',
+  Attack: '/\\',
+  Defend: '[]',
+  Curse:  '**',
 };
 
 export class EnemyPanel extends Phaser.GameObjects.Container {
@@ -59,23 +60,35 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
-    // ── 패널 배경 ────────────────────────────────────────────────
-    const bg = scene.add.graphics();
-    bg.fillStyle(0x2c1a1a, 0.95);
-    bg.fillRoundedRect(0, 0, W, PANEL_H, 8);
-    bg.lineStyle(2, 0x5c2c2c, 1);
-    bg.strokeRoundedRect(0, 0, W, PANEL_H, 8);
-    this.add(bg);
+    // ── 반투명 다크 오버레이 (벽돌 벽 위에 덮임) ────────────────
+    const overlay = scene.add.graphics();
+    overlay.fillStyle(THEME.PANEL_OVERLAY, 0.52);
+    overlay.fillRoundedRect(0, 0, W, PANEL_H, 8);
+    this.add(overlay);
+
+    // ── 골드 이중 테두리 (딥 레드 악센트) ───────────────────────
+    const border = scene.add.graphics();
+    border.lineStyle(2, THEME.GOLD_DARK, 1);
+    border.strokeRoundedRect(0, 0, W, PANEL_H, 8);
+    border.lineStyle(1, THEME.GOLD, 0.5);
+    border.strokeRoundedRect(4, 4, W - 8, PANEL_H - 8, 6);
+    this.add(border);
+
+    // ── 타이틀 바 (딥 레드) ─────────────────────────────────────
+    const titleBar = scene.add.graphics();
+    titleBar.fillStyle(THEME.RED_DEEP, 1);
+    titleBar.fillRoundedRect(2, 2, W - 4, 36, { tl: 7, tr: 7, bl: 0, br: 0 });
+    this.add(titleBar);
 
     // ── 이름 ────────────────────────────────────────────────────
-    this.nameText = scene.add.text(W / 2, Y.TITLE, '적', {
-      fontSize: '16px', color: '#e74c3c', fontStyle: 'bold',
+    this.nameText = scene.add.text(W / 2, Y.TITLE, 'ENEMY', {
+      fontSize: '14px', color: THEME.TEXT_CREAM, fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     this.add(this.nameText);
 
     // ── HP ──────────────────────────────────────────────────────
     this.hpText = scene.add.text(12, Y.HP_LABEL, '', {
-      fontSize: '14px', color: '#e74c3c',
+      fontSize: '13px', color: THEME.TEXT_CREAM,
     });
     this.add(this.hpText);
     this.hpBar = scene.add.graphics();
@@ -83,15 +96,15 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
 
     // ── 실드 ────────────────────────────────────────────────────
     this.shieldText = scene.add.text(12, Y.SHIELD_LABEL, '', {
-      fontSize: '14px', color: '#3498db',
+      fontSize: '13px', color: THEME.TEXT_CREAM,
     });
     this.add(this.shieldText);
     this.shieldBar = scene.add.graphics();
     this.add(this.shieldBar);
 
-    // ── 구분선 ──────────────────────────────────────────────────
+    // ── 구분선 (골드) ────────────────────────────────────────────
     const sep = scene.add.graphics();
-    sep.lineStyle(1, 0x5c2c2c, 1);
+    sep.lineStyle(1, THEME.GOLD_DARK, 0.6);
     sep.beginPath();
     sep.moveTo(12, Y.SEP);
     sep.lineTo(W - 12, Y.SEP);
@@ -99,33 +112,32 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
     this.add(sep);
 
     // ── 행동 카드 ────────────────────────────────────────────────
-    // 동적 배경 (update에서 clear→redraw)
     this.cardBg = scene.add.graphics();
     this.add(this.cardBg);
 
     // "다음 행동" 정적 헤더 라벨
     const headerLabel = scene.add.text(
-      CARD_X + 10, Y.CARD_TOP + CY.HEADER, '다음 행동', {
-        fontSize: '11px', color: '#7f8c8d',
+      CARD_X + 10, Y.CARD_TOP + CY.HEADER, 'NEXT ACTION', {
+        fontSize: '10px', color: THEME.TEXT_DIM,
       },
     );
     this.add(headerLabel);
 
-    // 행동 아이콘 (큰 이모지, 중앙 정렬)
+    // 행동 아이콘 (ASCII 심볼, 중앙 정렬)
     this.cardIconText = scene.add.text(W / 2, Y.CARD_TOP + CY.ICON, '', {
-      fontSize: '30px',
+      fontSize: '24px', color: THEME.TEXT_CREAM, fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     this.add(this.cardIconText);
 
     // 행동 타입 + 수치 (중앙, 컬러)
     this.cardTypeText = scene.add.text(W / 2, Y.CARD_TOP + CY.TYPE, '', {
-      fontSize: '14px', color: '#e74c3c', fontStyle: 'bold',
+      fontSize: '14px', color: '#CC2200', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     this.add(this.cardTypeText);
 
-    // 설명 (중앙, 작은 회색, 줄바꿈)
+    // 설명 (중앙, 작은 크림, 줄바꿈)
     this.cardDescText = scene.add.text(W / 2, Y.CARD_TOP + CY.DESC, '', {
-      fontSize: '11px', color: '#7f8c8d',
+      fontSize: '11px', color: THEME.TEXT_DIM,
       wordWrap: { width: CARD_W - 24 },
       align: 'center',
     }).setOrigin(0.5, 0);
@@ -144,7 +156,7 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
     };
   }
 
-  /** 피격/실드 플래시 효과 (PlayerPanel과 동일한 방식) */
+  /** 피격/실드 플래시 효과 */
   playHitEffect(type: 'attack' | 'shield' = 'attack'): void {
     const color = type === 'shield' ? 0x3498db : 0xff2222;
     const alpha = type === 'shield' ? 0.35 : 0.5;
@@ -179,59 +191,67 @@ export class EnemyPanel extends Phaser.GameObjects.Container {
   }
 
   update(enemy: EnemyState): void {
-    this.nameText.setText(`👾  ${enemy.name}`);
+    this.nameText.setText(enemy.name.toUpperCase());
 
     // HP 바
     this.hpBar.clear();
     const hpRatio = Math.max(0, enemy.hp / enemy.maxHp);
-    this.hpBar.fillStyle(0x3a1a1a, 1);
+    this.hpBar.fillStyle(0x1a0505, 1);
     this.hpBar.fillRect(12, Y.HP_BAR, BAR_W, 18);
-    this.hpBar.fillStyle(0xe74c3c, 1);
+    this.hpBar.fillStyle(THEME.RED_DEEP, 1);
     this.hpBar.fillRect(12, Y.HP_BAR, Math.floor(BAR_W * hpRatio), 18);
-    this.hpText.setText(`❤  HP  ${enemy.hp} / ${enemy.maxHp}`);
+    this.hpBar.lineStyle(1, THEME.GOLD_DARK, 0.3);
+    this.hpBar.strokeRect(12, Y.HP_BAR, BAR_W, 18);
+    this.hpText.setText(`HP  ${enemy.hp} / ${enemy.maxHp}`);
 
     // 실드 바
     this.shieldBar.clear();
-    this.shieldBar.fillStyle(0x1a2f3a, 1);
+    this.shieldBar.fillStyle(0x05101a, 1);
     this.shieldBar.fillRect(12, Y.SHIELD_BAR, BAR_W, 14);
     if (enemy.shield > 0) {
       const shieldRatio = Math.min(1, enemy.shield / 30);
       this.shieldBar.fillStyle(0x3498db, 1);
       this.shieldBar.fillRect(12, Y.SHIELD_BAR, Math.floor(BAR_W * shieldRatio), 14);
     }
-    this.shieldText.setText(`🛡  실드  ${enemy.shield}`);
+    this.shieldBar.lineStyle(1, THEME.GOLD_DARK, 0.3);
+    this.shieldBar.strokeRect(12, Y.SHIELD_BAR, BAR_W, 14);
+    this.shieldText.setText(`SHIELD  ${enemy.shield}`);
 
     // ── 행동 카드 업데이트 ──────────────────────────────────────
     const action = enemy.nextAction;
-    const color   = TYPE_COLOR[action.type] ?? 0xffffff;
+    const color   = TYPE_COLOR[action.type] ?? 0x888888;
     const hexStr  = `#${color.toString(16).padStart(6, '0')}`;
-    const icon    = TYPE_ICON[action.type]  ?? '❓';
+    const icon    = TYPE_ICON[action.type]  ?? '??';
     const label   = TYPE_LABEL[action.type] ?? action.type;
 
     // 카드 배경 재드로우
     this.cardBg.clear();
 
-    // 어두운 카드 내부
-    this.cardBg.fillStyle(0x110e1b, 0.98);
+    // 벽돌 카드 내부
+    this.cardBg.fillStyle(THEME.BRICK_MORTAR, 1);
     this.cardBg.fillRoundedRect(CARD_X, Y.CARD_TOP, CARD_W, CARD_H, 6);
 
-    // 컬러 테두리
-    this.cardBg.lineStyle(2, color, 0.75);
+    // 반투명 다크 오버레이
+    this.cardBg.fillStyle(THEME.PANEL_OVERLAY, 0.6);
+    this.cardBg.fillRoundedRect(CARD_X, Y.CARD_TOP, CARD_W, CARD_H, 6);
+
+    // 골드 테두리
+    this.cardBg.lineStyle(1.5, THEME.GOLD_DARK, 0.7);
     this.cardBg.strokeRoundedRect(CARD_X, Y.CARD_TOP, CARD_W, CARD_H, 6);
 
     // 좌측 컬러 액센트 바
-    this.cardBg.fillStyle(color, 0.85);
+    this.cardBg.fillStyle(color, 0.9);
     this.cardBg.fillRect(CARD_X, Y.CARD_TOP + 6, 4, CARD_H - 12);
 
-    // 헤더 구분선 (얇은 컬러)
-    this.cardBg.lineStyle(1, color, 0.25);
+    // 헤더 구분선 (골드)
+    this.cardBg.lineStyle(1, THEME.GOLD_DARK, 0.4);
     this.cardBg.beginPath();
     this.cardBg.moveTo(CARD_X + 10, Y.CARD_TOP + CY.DIVIDER);
     this.cardBg.lineTo(CARD_X + CARD_W - 10, Y.CARD_TOP + CY.DIVIDER);
     this.cardBg.strokePath();
 
     // 텍스트 업데이트
-    this.cardIconText.setText(icon);
+    this.cardIconText.setText(icon).setColor(hexStr);
     this.cardTypeText
       .setText(action.value > 0 ? `${label}  ${action.value}` : label)
       .setColor(hexStr);

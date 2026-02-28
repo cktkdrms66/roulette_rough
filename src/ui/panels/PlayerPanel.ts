@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BattleState } from '../../types/battle.types';
+import { THEME } from '../theme';
 
 // ─────────────────────────────────────────────
 //  레이아웃 상수 (모든 Y 좌표는 겹침 없이 배치됨)
@@ -31,60 +32,75 @@ export class PlayerPanel extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y);
 
-    // 배경
-    const bg = scene.add.graphics();
-    bg.fillStyle(0x1a252f, 0.95);
-    bg.fillRoundedRect(0, 0, W, PANEL_H, 8);
-    bg.lineStyle(2, 0x2c3e50, 1);
-    bg.strokeRoundedRect(0, 0, W, PANEL_H, 8);
-    this.add(bg);
+    // ── 반투명 다크 오버레이 (벽돌 벽 위에 덮임) ────────────────
+    const overlay = scene.add.graphics();
+    overlay.fillStyle(THEME.PANEL_OVERLAY, 0.52);
+    overlay.fillRoundedRect(0, 0, W, PANEL_H, 8);
+    this.add(overlay);
 
-    // 제목
-    const title = scene.add.text(W / 2, Y.TITLE, '⚔ 플레이어', {
-      fontSize: '16px', color: '#ecf0f1', fontStyle: 'bold',
+    // ── 골드 이중 테두리 ─────────────────────────────────────────
+    const border = scene.add.graphics();
+    // 바깥 테두리 (2px)
+    border.lineStyle(2, THEME.GOLD_DARK, 1);
+    border.strokeRoundedRect(0, 0, W, PANEL_H, 8);
+    // 안쪽 테두리 (1px, 4px 간격)
+    border.lineStyle(1, THEME.GOLD, 0.5);
+    border.strokeRoundedRect(4, 4, W - 8, PANEL_H - 8, 6);
+    this.add(border);
+
+    // ── 타이틀 바 ────────────────────────────────────────────────
+    const titleBar = scene.add.graphics();
+    titleBar.fillStyle(THEME.GOLD_DARK, 1);
+    titleBar.fillRoundedRect(2, 2, W - 4, 36, { tl: 7, tr: 7, bl: 0, br: 0 });
+    this.add(titleBar);
+
+    const title = scene.add.text(W / 2, Y.TITLE, '[ PLAYER ]', {
+      fontSize: '14px',
+      color: '#1a0a08',
+      fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     this.add(title);
 
-    // HP
+    // ── HP ──────────────────────────────────────────────────────
     this.hpText = scene.add.text(12, Y.HP_LABEL, '', {
-      fontSize: '14px', color: '#e74c3c',
+      fontSize: '13px', color: THEME.TEXT_CREAM,
     });
     this.add(this.hpText);
     this.hpBar = scene.add.graphics();
     this.add(this.hpBar);
 
-    // 실드
+    // ── 실드 ────────────────────────────────────────────────────
     this.shieldText = scene.add.text(12, Y.SHIELD_LABEL, '', {
-      fontSize: '14px', color: '#3498db',
+      fontSize: '13px', color: THEME.TEXT_CREAM,
     });
     this.add(this.shieldText);
     this.shieldBar = scene.add.graphics();
     this.add(this.shieldBar);
 
-    // 구분선
+    // ── 구분선 (골드) ─────────────────────────────────────────────
     const sep = scene.add.graphics();
-    sep.lineStyle(1, 0x2c3e50, 1);
+    sep.lineStyle(1, THEME.GOLD_DARK, 0.6);
     sep.beginPath();
     sep.moveTo(12, Y.SEP);
     sep.lineTo(W - 12, Y.SEP);
     sep.strokePath();
     this.add(sep);
 
-    // 골드
+    // ── 골드 ────────────────────────────────────────────────────
     this.goldText = scene.add.text(12, Y.GOLD, '', {
-      fontSize: '14px', color: '#f1c40f',
+      fontSize: '13px', color: THEME.TEXT_GOLD,
     });
     this.add(this.goldText);
 
-    // 리롤
+    // ── 리롤 ────────────────────────────────────────────────────
     this.rerollText = scene.add.text(12, Y.REROLL, '', {
-      fontSize: '14px', color: '#2ecc71',
+      fontSize: '13px', color: THEME.TEXT_CREAM,
     });
     this.add(this.rerollText);
 
-    // 웨이브
+    // ── 웨이브 ──────────────────────────────────────────────────
     this.waveText = scene.add.text(12, Y.WAVE, '', {
-      fontSize: '14px', color: '#95a5a6',
+      fontSize: '13px', color: THEME.TEXT_DIM,
     });
     this.add(this.waveText);
 
@@ -139,28 +155,33 @@ export class PlayerPanel extends Phaser.GameObjects.Container {
 
   update(state: BattleState): void {
     // HP 바
-    this.hpText.setText(`❤  HP  ${state.playerHP} / ${state.playerMaxHP}`);
+    this.hpText.setText(`HP  ${state.playerHP} / ${state.playerMaxHP}`);
     this.hpBar.clear();
     const hpRatio = Math.max(0, state.playerHP / state.playerMaxHP);
-    this.hpBar.fillStyle(0x1a3a2a, 1);
+    this.hpBar.fillStyle(0x1a0505, 1);
     this.hpBar.fillRect(12, Y.HP_BAR, BAR_W, 18);
-    this.hpBar.fillStyle(0xe74c3c, 1);
+    this.hpBar.fillStyle(THEME.RED_DEEP, 1);
     this.hpBar.fillRect(12, Y.HP_BAR, Math.floor(BAR_W * hpRatio), 18);
+    // HP 바 테두리
+    this.hpBar.lineStyle(1, THEME.GOLD_DARK, 0.3);
+    this.hpBar.strokeRect(12, Y.HP_BAR, BAR_W, 18);
 
     // 실드 바
-    this.shieldText.setText(`🛡  실드  ${state.playerShield}`);
+    this.shieldText.setText(`SHIELD  ${state.playerShield}`);
     this.shieldBar.clear();
     const shieldRatio = Math.min(1, state.playerShield > 0 ? state.playerShield / 30 : 0);
-    this.shieldBar.fillStyle(0x1a2f3a, 1);
+    this.shieldBar.fillStyle(0x05101a, 1);
     this.shieldBar.fillRect(12, Y.SHIELD_BAR, BAR_W, 14);
     if (state.playerShield > 0) {
       this.shieldBar.fillStyle(0x3498db, 1);
       this.shieldBar.fillRect(12, Y.SHIELD_BAR, Math.floor(BAR_W * shieldRatio), 14);
     }
+    this.shieldBar.lineStyle(1, THEME.GOLD_DARK, 0.3);
+    this.shieldBar.strokeRect(12, Y.SHIELD_BAR, BAR_W, 14);
 
     // 자원
-    this.goldText.setText(`💰  골드  ${state.playerGold}`);
-    this.rerollText.setText(`🔄  무료 리롤  ${state.freeRerolls}회`);
-    this.waveText.setText(`🌊  웨이브  ${state.wave} / ${state.maxWaves}`);
+    this.goldText.setText(`GOLD  ${state.playerGold}`);
+    this.rerollText.setText(`REROLL  x${state.freeRerolls}`);
+    this.waveText.setText(`WAVE  ${state.wave} / ${state.maxWaves}`);
   }
 }

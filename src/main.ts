@@ -10,7 +10,7 @@ const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   width: 1280,
   height: 720,
-  backgroundColor: '#1a1a2e',
+  backgroundColor: '#0f0a0a',
   parent: undefined,
   scene: [BootScene, MapScene, BattleScene, JokerSelectScene, GameOverScene, VictoryScene],
   scale: {

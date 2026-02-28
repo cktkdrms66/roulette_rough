@@ -1,28 +1,11 @@
 import Phaser from 'phaser';
 import { CardDef } from '../../types/card.types';
+import { THEME, CARD_SUITS } from '../theme';
 
 const CARD_W = 140;
 const CARD_H = 175;
-const HEADER_H = 34;
-
-const TYPE_COLORS: Record<string, number> = {
-  ModifyRandom: 0x2ecc71,
-  ModifySelect: 0x3498db,
-  ReplaceSlots: 0xe67e22,
-  ModifyGlobal: 0x9b59b6,
-  RuleModify: 0x1abc9c,
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  ModifyRandom: '랜덤 강화',
-  ModifySelect: '선택 강화',
-  ReplaceSlots: '슬롯 교체',
-  ModifyGlobal: '전체 강화',
-  RuleModify:   '규칙 변경',
-};
 
 export class CardView extends Phaser.GameObjects.Container {
-  private bg: Phaser.GameObjects.Graphics;
   private nameText: Phaser.GameObjects.Text;
   private descText: Phaser.GameObjects.Text;
   private costText: Phaser.GameObjects.Text;
@@ -35,61 +18,77 @@ export class CardView extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.card = card;
 
-    const color = TYPE_COLORS[card.cardType] ?? 0x555555;
+    const suit = CARD_SUITS[card.cardType] ?? { symbol: '?', color: 0x888888, colorStr: '#888888' };
+    const cx = -CARD_W / 2;
+    const cy = -CARD_H / 2;
 
-    // 카드 배경
-    this.bg = scene.add.graphics();
-    this.bg.fillStyle(0x1e2235, 1);
-    this.bg.fillRoundedRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 10);
-    this.bg.lineStyle(2, color, 1);
-    this.bg.strokeRoundedRect(-CARD_W / 2, -CARD_H / 2, CARD_W, CARD_H, 10);
+    // ── 그림자 ──────────────────────────────────────────────────
+    const shadow = scene.add.graphics();
+    shadow.fillStyle(THEME.CARD_SHADOW, 0.35);
+    shadow.fillRoundedRect(cx + 4, cy + 4, CARD_W, CARD_H, 10);
+    this.add(shadow);
 
-    // 상단 색상 헤더 띠
-    const header = scene.add.graphics();
-    header.fillStyle(color, 1);
-    header.fillRoundedRect(-CARD_W / 2, -CARD_H / 2, CARD_W, HEADER_H, { tl: 10, tr: 10, bl: 0, br: 0 });
+    // ── 아이보리 배경 ────────────────────────────────────────────
+    const bg = scene.add.graphics();
+    bg.fillStyle(THEME.CARD_BG, 1);
+    bg.fillRoundedRect(cx, cy, CARD_W, CARD_H, 10);
+    // 수트 색 테두리
+    bg.lineStyle(1.5, suit.color, 0.6);
+    bg.strokeRoundedRect(cx, cy, CARD_W, CARD_H, 10);
+    this.add(bg);
 
-    // 카드 타입 레이블 (헤더 내)
-    const typeLabel = scene.add.text(0, -CARD_H / 2 + HEADER_H / 2, TYPE_LABELS[card.cardType] ?? card.cardType, {
-      fontSize: '11px',
-      color: 'rgba(255,255,255,0.75)',
+    // ── 좌상단: 수트 심볼 + 비용 ────────────────────────────────
+    const topLeft = scene.add.text(cx + 8, cy + 7, `${suit.symbol} ${card.cost}`, {
+      fontSize: '12px',
+      color: suit.colorStr,
       fontStyle: 'bold',
-    }).setOrigin(0.5, 0.5);
+    }).setOrigin(0, 0);
+    this.add(topLeft);
 
-    // 구분선 (헤더 아래)
-    const divider = scene.add.graphics();
-    divider.lineStyle(1, color, 0.3);
-    divider.beginPath();
-    divider.moveTo(-CARD_W / 2 + 8, -CARD_H / 2 + HEADER_H + 1);
-    divider.lineTo(CARD_W / 2 - 8, -CARD_H / 2 + HEADER_H + 1);
-    divider.strokePath();
+    // ── 중앙 상단: 큰 수트 심볼 ─────────────────────────────────
+    const bigSuit = scene.add.text(0, cy + 34, suit.symbol, {
+      fontSize: '36px',
+      color: suit.colorStr,
+    }).setOrigin(0.5, 0);
+    this.add(bigSuit);
 
-    // 카드 이름 (헤더 바로 아래)
-    this.nameText = scene.add.text(0, -CARD_H / 2 + HEADER_H + 22, card.name, {
-      fontSize: '14px',
-      color: '#ffffff',
+    // ── 카드 이름 ────────────────────────────────────────────────
+    this.nameText = scene.add.text(0, cy + 76, card.name, {
+      fontSize: '13px',
+      color: '#1a0a08',
       fontStyle: 'bold',
       wordWrap: { width: CARD_W - 16 },
       align: 'center',
-    }).setOrigin(0.5, 0.5);
+    }).setOrigin(0.5, 0);
+    this.add(this.nameText);
 
-    // 설명 텍스트 (중앙)
-    this.descText = scene.add.text(0, 10, card.description, {
-      fontSize: '11px',
-      color: '#c8d0e0',
-      wordWrap: { width: CARD_W - 18 },
+    // ── 골드 구분선 ──────────────────────────────────────────────
+    const divider = scene.add.graphics();
+    divider.lineStyle(1, THEME.GOLD_DARK, 0.7);
+    divider.beginPath();
+    divider.moveTo(cx + 12, cy + 98);
+    divider.lineTo(cx + CARD_W - 12, cy + 98);
+    divider.strokePath();
+    this.add(divider);
+
+    // ── 설명 텍스트 ──────────────────────────────────────────────
+    this.descText = scene.add.text(0, cy + 104, card.description, {
+      fontSize: '10px',
+      color: '#3a2010',
+      wordWrap: { width: CARD_W - 20 },
       align: 'center',
-      lineSpacing: 3,
-    }).setOrigin(0.5, 0.5);
+      lineSpacing: 2,
+    }).setOrigin(0.5, 0);
+    this.add(this.descText);
 
-    // 비용 (우측 하단)
-    this.costText = scene.add.text(CARD_W / 2 - 10, CARD_H / 2 - 10, `${card.cost}💰`, {
-      fontSize: '14px',
-      color: '#f1c40f',
+    // ── 우하단: 가격 ─────────────────────────────────────────────
+    this.costText = scene.add.text(cx + CARD_W - 8, cy + CARD_H - 8, `${card.cost} G`, {
+      fontSize: '12px',
+      color: suit.colorStr,
       fontStyle: 'bold',
     }).setOrigin(1, 1);
+    this.add(this.costText);
 
-    this.add([this.bg, header, typeLabel, divider, this.nameText, this.descText, this.costText]);
     this.setSize(CARD_W, CARD_H);
     scene.add.existing(this);
   }
