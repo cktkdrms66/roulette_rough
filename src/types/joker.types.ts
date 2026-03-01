@@ -2,7 +2,13 @@ export type JokerTrigger =
   | 'OnAttackHit'
   | 'OnGoldGained'
   | 'OnCurseTriggered'
-  | 'OnSpinResolved';
+  | 'OnSpinResolved'
+  | 'OnSpinStart'
+  | 'OnEnemyDefeated'
+  | 'OnPlayerDamaged'
+  | 'OnHealApplied'
+  | 'OnCriticalHit'
+  | 'Passive';
 
 export interface JokerDef {
   id: string;

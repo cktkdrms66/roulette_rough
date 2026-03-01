@@ -77,12 +77,13 @@ export class DragCardController {
       // 휠 위 슬롯 감지
       const hoveredIndex = this.wheel.getSlotIndexFromPointer(p.x, p.y);
       if (hoveredIndex >= 0) {
-        const count = cardView.card.replaceCount ?? 1;
+        const count = this.cardSystem.requiredSlotCount(cardView.card);
         const group = this.wheel.getSlotGroup(hoveredIndex, count);
         this.currentHoveredIndices = group;
 
-        // 필터 유효성 검사
-        const isValid = this.isValidTarget(cardView.card, group);
+        // 필터 유효성 검사 + 구매 가능 여부 검사
+        const canAfford = this.battleState.playerGold >= (cardView.card.cost ?? 0);
+        const isValid = canAfford && this.isValidTarget(cardView.card, group);
         this.wheel.setHighlight(group, isValid ? 'valid' : 'invalid');
 
         // 유효 슬롯 위에 올라가면 카드 반투명
@@ -113,7 +114,8 @@ export class DragCardController {
     const indices = this.currentHoveredIndices;
     const card = cardView.card;
 
-    if (indices.length > 0 && this.isValidTarget(card, indices)) {
+    const canAfford = this.battleState.playerGold >= (card.cost ?? 0);
+    if (indices.length > 0 && canAfford && this.isValidTarget(card, indices)) {
       // 드롭 성공 → 이벤트 발행
       this.events.emit(GameEvents.CARD_DROPPED_ON_SLOTS, {
         cardDef: card,

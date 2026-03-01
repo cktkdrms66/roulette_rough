@@ -51,6 +51,7 @@ export function createInitialBattleState(wave: number = 1): BattleState {
     consecutiveAttackCount: 0,
     nextAttackMultiplier: 1,
     globalAttackFlat: 0,
+    waveGlobalFlat: 0,
     phase: 'PlayerTurn',
     playerStunned: false,
   };

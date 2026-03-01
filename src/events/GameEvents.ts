@@ -21,6 +21,10 @@ export const GameEvents = {
   PLAYER_STUNNED: 'player_stunned',
   ENEMY_STUNNED: 'enemy_stunned',
   PHASE_CHANGED: 'phase_changed',
+  CRITICAL_HIT: 'critical_hit',
+  PLAYER_DAMAGED: 'player_damaged',
+  ENEMY_DEFEATED: 'enemy_defeated',
+  TAG_TRIGGERED: 'tag_triggered',
 } as const;
 
 export type GameEventName = (typeof GameEvents)[keyof typeof GameEvents];

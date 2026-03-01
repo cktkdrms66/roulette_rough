@@ -1,5 +1,4 @@
 import { BattleState } from '../types/battle.types';
-import { JOKERS } from '../data/jokers';
 
 export interface SpinResult {
   landedIndex: number;
@@ -27,22 +26,9 @@ export class RouletteSystem {
     return currentAngle + this.EXTRA_REVOLUTIONS * 360 + delta;
   }
 
-  // 발동할 슬롯 목록 생성
-  buildTriggerList(state: BattleState, landedIndex: number): number[] {
-    const triggers: number[] = [landedIndex];
-
-    // 오른쪽 조커 체크: 50% 확률로 index+1 추가 발동
-    const hasRightJoker = state.jokers.some(j => j.id === 'JOKER_RIGHT');
-    if (hasRightJoker) {
-      const rightJoker = JOKERS.find(j => j.id === 'JOKER_RIGHT');
-      const prob = rightJoker?.param ?? 0.5;
-      const nextIndex = landedIndex + 1;
-      if (nextIndex < this.SLOT_COUNT && Math.random() < prob) {
-        triggers.push(nextIndex);
-      }
-    }
-
-    return triggers;
+  // 발동할 슬롯 목록 생성 (착지 슬롯만 반환, 연쇄는 TagSystem이 처리)
+  buildTriggerList(_state: BattleState, landedIndex: number): number[] {
+    return [landedIndex];
   }
 
   // 스핀 결과 계산 (랜덤 착지)

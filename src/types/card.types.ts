@@ -1,6 +1,20 @@
 import { SlotCategory, AttackType } from './slot.types';
+import { TagType } from './tag.types';
 
-export type CardType = 'ModifyRandom' | 'ModifySelect' | 'ReplaceSlots' | 'ModifyGlobal' | 'RuleModify';
+export type CardType =
+  | 'ModifyRandom'
+  | 'ModifySelect'
+  | 'ModifyGlobal'
+  | 'ReplaceSlots'
+  | 'RuleModify'
+  | 'DamageRandom'
+  | 'DamageSelect'
+  | 'DuplicateSlot'
+  | 'SwapSlots'
+  | 'HealPlayer'
+  | 'AddTagRandom'
+  | 'AddTagSelect'
+  | 'IncreaseMaxTags';
 
 export interface SlotFilter {
   category?: SlotCategory;
@@ -29,4 +43,7 @@ export interface CardDef {
   replaceBonus?: number;         // ReplaceSlots 새 슬롯에 부여할 flatDamageBonus
   ruleKey?: string;              // RuleModify용 규칙 키
   ruleValue?: number;            // RuleModify용 규칙 값
+  damageDelta?: number;          // DamageRandom/DamageSelect용 피해 증가량
+  tagType?: TagType;             // AddTag 계열 카드용
+  healAmount?: number;           // HealPlayer 카드용
 }

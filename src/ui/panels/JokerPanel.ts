@@ -10,14 +10,20 @@ const SLOT_GAP = 17;
 
 // 이모지 없이 카드 수트 심볼 + 약어 조합 (Unicode 기본 심볼, 이모지 아님)
 const JOKER_ICONS: Record<string, string> = {
-  JOKER_CURSE:         '\u2660\nCRSE', // ♠
-  JOKER_DOPAMINE:      '\u2665\nZAP',  // ♥
-  JOKER_GOLD:          '\u2666\nGOLD', // ♦
-  JOKER_ATTACK:        '\u2663\nATK',  // ♣
-  JOKER_GROWTH:        '\u2665\nGRW',  // ♥
-  JOKER_FOOL:          '\u2660\nJKR',  // ♠
-  JOKER_REVERSE_CURSE: '\u2666\nREV',  // ♦
-  JOKER_RIGHT:         '\u2663\nRGT',  // ♣
+  JOKER_REROLL:          '\u2666\nLCK',  // ♦ 행운
+  JOKER_CONSECUTIVE_UP:  '\u2663\nCNS',  // ♣ 연속의 달인
+  JOKER_DOUBLE_CRIT:     '\u2660\nBRS',  // ♠ 광전사
+  JOKER_PERM_KILL:       '\u2663\nCNQ',  // ♣ 정복자
+  JOKER_DMG_ON_HIT:      '\u2665\nGRT',  // ♥ 투지
+  JOKER_GOLD_DMG:        '\u2666\nGLD',  // ♦ 황금 손
+  JOKER_CURSE_ATK:       '\u2660\nCRS',  // ♠ 저주의 힘
+  JOKER_SPIN_BOOST:      '\u2666\nSPN',  // ♦ 스핀 러시
+  JOKER_HEAL_BOOST:      '\u2665\nHLB',  // ♥ 생명력
+  JOKER_SHIELD_DMG:      '\u2663\nSHD',  // ♣ 철벽
+  JOKER_CRIT_CHANCE:     '\u2660\nSHP',  // ♠ 예리함
+  JOKER_CRIT_DMG:        '\u2666\nSNP',  // ♦ 저격수
+  JOKER_CRIT_GOLD:       '\u2665\nNDG',  // ♥ 노다지
+  JOKER_CRIT_BOOST:      '\u2663\nOPT',  // ♣ 기회주의자
 };
 
 export class JokerPanel extends Phaser.GameObjects.Container {
@@ -123,8 +129,13 @@ export class JokerPanel extends Phaser.GameObjects.Container {
 
     const worldX = this.x + slot.x;
     const worldY = this.y + slot.y;
-    const tipY = worldY - th - 6;
-    this.tooltip.setPosition(worldX, tipY > 0 ? tipY : worldY + SLOT_H + 6);
+
+    // 카드 왼쪽 우선, 화면 밖이면 오른쪽
+    let tipX = worldX - tw - 8;
+    if (tipX < 4) tipX = worldX + SLOT_W + 8;
+    const tipY = Math.max(4, worldY + (SLOT_H - th) / 2);
+
+    this.tooltip.setPosition(tipX, tipY);
     this.tooltip.setVisible(true);
   }
 

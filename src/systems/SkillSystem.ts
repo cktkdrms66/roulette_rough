@@ -48,7 +48,7 @@ export class SkillSystem {
       basePower: skill.basePower,
       flatBonus: slot.flatDamageBonus,
       percentBonus: slot.percentDamageBonus,
-      globalFlat: state.globalAttackFlat,
+      globalFlat: state.globalAttackFlat + state.waveGlobalFlat,
       multiplier: state.nextAttackMultiplier,
       hitCount,
     });
@@ -71,7 +71,7 @@ export class SkillSystem {
       basePower: skill.basePower + bonus,
       flatBonus: slot.flatDamageBonus,
       percentBonus: slot.percentDamageBonus,
-      globalFlat: state.globalAttackFlat,
+      globalFlat: state.globalAttackFlat + state.waveGlobalFlat,
       multiplier: state.nextAttackMultiplier,
       hitCount: 1,
     });

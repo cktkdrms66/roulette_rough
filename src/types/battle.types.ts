@@ -42,7 +42,8 @@ export interface BattleState {
   rerollCost: number;
   consecutiveAttackCount: number;
   nextAttackMultiplier: number;  // 심호흡용
-  globalAttackFlat: number;      // 성장형 조커용
+  globalAttackFlat: number;      // 영구 누적형 전체 피해 보너스
+  waveGlobalFlat: number;        // 웨이브마다 리셋되는 임시 전체 피해 보너스
   phase: BattlePhase;
   playerStunned: boolean;
 }

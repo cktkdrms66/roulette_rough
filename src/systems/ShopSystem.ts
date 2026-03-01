@@ -45,13 +45,9 @@ export class ShopSystem {
 
   // 골드 획득
   gainGold(state: BattleState, amount: number, events: TypedEventEmitter): number {
-    // 골드 조커 체크
-    const goldJoker = state.jokers.find(j => j.id === 'JOKER_GOLD');
-    const finalAmount = goldJoker ? Math.floor(amount * (goldJoker.param ?? 1.3)) : amount;
-
-    state.playerGold += finalAmount;
-    events.emit(GameEvents.GOLD_CHANGED, { amount: finalAmount, newTotal: state.playerGold });
-    return finalAmount;
+    state.playerGold += amount;
+    events.emit(GameEvents.GOLD_CHANGED, { amount, newTotal: state.playerGold });
+    return amount;
   }
 
   // 상점 리롤
@@ -62,6 +58,7 @@ export class ShopSystem {
       state.freeRerolls -= 1;
     } else {
       this.spendGold(state, state.rerollCost, events);
+      state.rerollCost += 1;
     }
 
     state.shopCards = this.drawShopCards(3, state);
